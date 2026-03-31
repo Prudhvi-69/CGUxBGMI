@@ -1,0 +1,160 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+  /* Prevent font size inflation on mobile */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  background-color: #0A0A0F;
+  color: #fff;
+  font-family: 'Rajdhani', sans-serif;
+  overflow-x: hidden;
+  /* Safe area for notched phones */
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Scanline overlay */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.03) 2px,
+    rgba(0,0,0,0.03) 4px
+  );
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* Scrollbar — desktop only */
+@media (min-width: 640px) {
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: #0A0A0F; }
+  ::-webkit-scrollbar-thumb { background: #FF6B00; border-radius: 3px; }
+}
+
+/* Hide scrollbar on filter tabs row */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+
+/* Glitch text effect */
+.glitch {
+  position: relative;
+  animation: glitch 3s infinite;
+}
+.glitch::before, .glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+}
+.glitch::before {
+  color: #FF6B00;
+  animation: glitch-1 3s infinite;
+  clip-path: polygon(0 0, 100% 0, 100% 35%, 0 35%);
+}
+.glitch::after {
+  color: #FFD700;
+  animation: glitch-2 3s infinite;
+  clip-path: polygon(0 65%, 100% 65%, 100% 100%, 0 100%);
+}
+
+@keyframes glitch {
+  0%, 90%, 100% { transform: translate(0); }
+  92% { transform: translate(-2px, 1px); }
+  94% { transform: translate(2px, -1px); }
+  96% { transform: translate(-1px, 2px); }
+}
+@keyframes glitch-1 {
+  0%, 90%, 100% { transform: translate(0); }
+  92% { transform: translate(3px, 0); }
+  94% { transform: translate(-3px, 0); }
+}
+@keyframes glitch-2 {
+  0%, 90%, 100% { transform: translate(0); }
+  92% { transform: translate(-3px, 0); }
+  94% { transform: translate(3px, 0); }
+}
+
+/* Neon border */
+.neon-border {
+  border: 1px solid #FF6B00;
+  box-shadow: 0 0 10px rgba(255, 107, 0, 0.3), inset 0 0 10px rgba(255, 107, 0, 0.05);
+}
+.neon-border-gold {
+  border: 1px solid #FFD700;
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.3), inset 0 0 10px rgba(255, 215, 0, 0.05);
+}
+
+/* Particle canvas */
+#particles { position: fixed; top: 0; left: 0; z-index: 0; pointer-events: none; }
+
+/* Input glow — only on devices that support hover (not touch) */
+@media (hover: hover) {
+  .input-glow:focus {
+    outline: none;
+    border-color: #FF6B00;
+    box-shadow: 0 0 15px rgba(255, 107, 0, 0.4);
+  }
+}
+/* Always apply focus ring on touch devices */
+.input-glow:focus {
+  outline: none;
+  border-color: #FF6B00;
+}
+
+/* Button hover */
+.btn-gaming {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn-gaming::before {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 0; height: 0;
+  background: rgba(255,255,255,0.1);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+@media (hover: hover) {
+  .btn-gaming:hover::before { width: 300px; height: 300px; }
+}
+
+/* Card hover — only on non-touch */
+.tournament-card {
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+@media (hover: hover) {
+  .tournament-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 40px rgba(255, 107, 0, 0.3);
+  }
+}
+
+/* Prevent inputs from zooming on iOS (font-size must be >= 16px on focus) */
+@media screen and (max-width: 640px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
