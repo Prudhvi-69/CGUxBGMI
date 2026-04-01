@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken')
-const { getPool } = require('./db')
+const { supabase } = require('./db')
 
-const JWT_SECRET = process.env.JWT_SECRET || 'cgu_bgmi_secret_2025'
+const JWT_SECRET = process.env.JWT_SECRET || 'cgu_bgmi_super_secret_key_2025'
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'GET') return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) }
@@ -17,31 +17,28 @@ exports.handler = async (event) => {
   }
 
   try {
-    const pool = getPool()
+    const { data, error } = await supabase
+      .from('tournaments')
+      .select('id, name, description, date, time, max_players, registered_count, prize_pool, status')
+      .order('date', { ascending: true })
 
-    // Ensure tournaments table exists
-    await pool.execute(`
-      CREATE TABLE IF NOT EXISTS tournaments (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        name VARCHAR(150) NOT NULL,
-        description TEXT,
-        date DATE,
-        time VARCHAR(20),
-        max_players INT DEFAULT 100,
-        registered_count INT DEFAULT 0,
-        prize_pool VARCHAR(50),
-        status ENUM('upcoming','live','completed') DEFAULT 'upcoming',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `)
+    if (error) throw error
 
-    const [rows] = await pool.execute(
-      'SELECT id, name, description, date, time, max_players AS maxPlayers, registered_count AS registeredCount, prize_pool AS prizePool, status FROM tournaments ORDER BY date ASC'
-    )
+    const tournaments = (data || []).map(t => ({
+      id: t.id,
+      name: t.name,
+      description: t.description,
+      date: t.date,
+      time: t.time,
+      maxPlayers: t.max_players,
+      registeredCount: t.registered_count,
+      prizePool: t.prize_pool,
+      status: t.status,
+    }))
 
-    return { statusCode: 200, body: JSON.stringify({ tournaments: rows }) }
+    return { statusCode: 200, body: JSON.stringify({ tournaments }) }
   } catch (err) {
     console.error(err)
-    return { statusCode: 500, body: JSON.stringify({ error: 'Failed to fetch tournaments' }) }
+    return { statusCode: 500, body: JSON.stringify({ error: 'Failed to fetch tournaments: ' + err.message }) }
   }
 }
