@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { User, Mail, Phone, Gamepad2, Eye, EyeOff, CheckCircle, XCircle } from 'lucide-react'
+import { User, Mail, Phone, Gamepad2, Eye, EyeOff, CheckCircle, XCircle, AlertTriangle } from 'lucide-react'
 import Navbar from '../components/Navbar'
 
 const CGU_DOMAIN = '@cgu-odisha.ac.in'
+const MAX_SLOTS = 90
 
 export default function Register() {
   const navigate = useNavigate()
@@ -14,7 +15,8 @@ export default function Register() {
   const [errors, setErrors] = useState({})
   const [showPass, setShowPass] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [success, setSuccess] = useState(false)
+  const [success, setSuccess] = useState(null) // stores { slotNumber, slotsRemaining }
+  const [slotsFull, setSlotsFull] = useState(false)
 
   const validate = () => {
     const e = {}
@@ -45,9 +47,13 @@ export default function Register() {
         body: JSON.stringify(form),
       })
       const data = await res.json()
+      if (data.error === 'SLOTS_FULL') {
+        setSlotsFull(true)
+        return
+      }
       if (!res.ok) throw new Error(data.error || 'Registration failed')
-      setSuccess(true)
-      setTimeout(() => navigate('/login'), 2000)
+      setSuccess({ slotNumber: data.slotNumber, slotsRemaining: data.slotsRemaining })
+      setTimeout(() => navigate('/login'), 3000)
     } catch (err) {
       setErrors({ submit: err.message })
     } finally {
@@ -57,13 +63,46 @@ export default function Register() {
 
   const emailValid = form.email.endsWith(CGU_DOMAIN) && form.email.length > CGU_DOMAIN.length
 
+  // Slots full screen
+  if (slotsFull) {
+    return (
+      <div className="min-h-screen flex items-center justify-center z-10 relative px-4">
+        <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+          className="text-center max-w-md">
+          <div className="text-6xl mb-6">😔</div>
+          <h2 className="font-display text-3xl sm:text-4xl text-bgmi-orange font-black tracking-widest mb-3">SLOTS FULL</h2>
+          <div className="neon-border rounded-xl p-6 bg-bgmi-card mb-6">
+            <p className="text-white font-gaming text-base leading-relaxed mb-2">
+              All <span className="text-bgmi-gold font-bold">{MAX_SLOTS} slots</span> have been filled.
+            </p>
+            <p className="text-gray-400 font-gaming text-sm leading-relaxed">
+              We're truly sorry — registrations are now closed on a first come, first serve basis.
+              We hope to see you battle it out in our next tournament. Stay tuned! 🎮
+            </p>
+          </div>
+          <Link to="/"
+            className="btn-gaming inline-block px-8 py-3 font-display font-bold text-sm tracking-widest neon-border text-bgmi-orange rounded hover:bg-bgmi-orange hover:text-black transition-all">
+            BACK TO HOME
+          </Link>
+        </motion.div>
+      </div>
+    )
+  }
+
+  // Success screen
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center z-10 relative">
-        <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="text-center">
+      <div className="min-h-screen flex items-center justify-center z-10 relative px-4">
+        <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+          className="text-center max-w-sm">
           <CheckCircle className="w-20 h-20 text-green-400 mx-auto mb-4" />
-          <h2 className="font-display text-3xl text-white font-bold">REGISTERED!</h2>
-          <p className="text-gray-400 font-gaming mt-2">Redirecting to login...</p>
+          <h2 className="font-display text-3xl text-white font-black tracking-widest">YOU'RE IN!</h2>
+          <p className="text-bgmi-gold font-display font-bold text-lg mt-2">Slot #{success.slotNumber} of {MAX_SLOTS}</p>
+          {success.slotsRemaining > 0
+            ? <p className="text-gray-500 font-gaming text-sm mt-1">{success.slotsRemaining} slots remaining</p>
+            : <p className="text-bgmi-orange font-gaming text-sm mt-1">🔥 You got the last slot!</p>
+          }
+          <p className="text-gray-400 font-gaming text-sm mt-4">Redirecting to login...</p>
         </motion.div>
       </div>
     )

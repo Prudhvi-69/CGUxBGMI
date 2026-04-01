@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Trophy, Calendar, Users, Clock, Gamepad2, Wifi, Map, MessageCircle, X, Shield, Info } from 'lucide-react'
+import { Trophy, Calendar, Users, Clock, Gamepad2, Wifi, Map, MessageCircle, X, Shield, Info, Lock } from 'lucide-react'
 import Navbar from '../components/Navbar'
 
 const STATUS_COLORS = {
@@ -160,12 +160,32 @@ export default function Dashboard() {
                       <span>{t.mapName}</span>
                     </div>
                   )}
-                  {t.maxPlayers && (
-                    <div className="flex items-center gap-2">
-                      <Users size={13} className="text-bgmi-orange flex-shrink-0" />
-                      <span>{t.registeredCount || 0}/{t.maxPlayers} players</span>
+                {/* Slot progress bar */}
+                {t.maxPlayers && (() => {
+                  const filled = t.registeredCount || 0
+                  const pct = Math.min((filled / t.maxPlayers) * 100, 100)
+                  const isFull = filled >= t.maxPlayers
+                  const isAlmostFull = pct >= 80
+                  return (
+                    <div>
+                      <div className="flex justify-between text-xs font-gaming mb-1">
+                        <span className={isFull ? 'text-red-400' : isAlmostFull ? 'text-yellow-400' : 'text-gray-500'}>
+                          {isFull ? '🔒 SLOTS FULL' : `${filled} / ${t.maxPlayers} registered`}
+                        </span>
+                        <span className={isFull ? 'text-red-400' : 'text-gray-600'}>
+                          {isFull ? '0 left' : `${t.maxPlayers - filled} left`}
+                        </span>
+                      </div>
+                      <div className="w-full h-1.5 bg-bgmi-border rounded-full overflow-hidden">
+                        <div className="h-full rounded-full transition-all duration-500"
+                          style={{
+                            width: `${pct}%`,
+                            background: isFull ? '#ef4444' : isAlmostFull ? '#eab308' : '#FF6B00'
+                          }} />
+                      </div>
                     </div>
-                  )}
+                  )
+                })()}
                   {t.eligibleYears && (
                     <div className="flex items-start gap-2">
                       <Info size={13} className="text-yellow-500 flex-shrink-0 mt-0.5" />
@@ -190,13 +210,20 @@ export default function Dashboard() {
                 )}
 
                 {/* Participate button — only if whatsapp link exists */}
-                {t.whatsappLink && (
-                  <button
-                    onClick={() => openParticipate(t)}
-                    className="btn-gaming mt-auto w-full py-2.5 text-xs font-display tracking-widest bg-green-600 hover:bg-green-500 text-white rounded flex items-center justify-center gap-2 transition-all touch-manipulation">
-                    <MessageCircle size={14} /> PARTICIPATE
-                  </button>
-                )}
+                {t.whatsappLink && (() => {
+                  const isFull = (t.registeredCount || 0) >= (t.maxPlayers || 90)
+                  return isFull ? (
+                    <div className="mt-auto w-full py-2.5 text-xs font-display tracking-widest bg-bgmi-dark border border-red-900 text-red-500 rounded flex items-center justify-center gap-2 cursor-not-allowed">
+                      <Lock size={13} /> REGISTRATIONS CLOSED
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => openParticipate(t)}
+                      className="btn-gaming mt-auto w-full py-2.5 text-xs font-display tracking-widest bg-green-600 hover:bg-green-500 text-white rounded flex items-center justify-center gap-2 transition-all touch-manipulation">
+                      <MessageCircle size={14} /> PARTICIPATE
+                    </button>
+                  )
+                })()}
               </div>
             </motion.div>
           ))}

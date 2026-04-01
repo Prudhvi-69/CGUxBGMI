@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs')
 const { supabase } = require('./db')
 
 const CGU_DOMAIN = '@cgu-odisha.ac.in'
+const MAX_SLOTS = 90
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) }
@@ -18,6 +19,23 @@ exports.handler = async (event) => {
     return { statusCode: 400, body: JSON.stringify({ error: 'All fields are required' }) }
 
   try {
+    // Check total registered players — enforce 90 slot limit (first come first serve)
+    const { count, error: countError } = await supabase
+      .from('players')
+      .select('*', { count: 'exact', head: true })
+
+    if (countError) throw countError
+
+    if (count >= MAX_SLOTS) {
+      return {
+        statusCode: 409,
+        body: JSON.stringify({
+          error: 'SLOTS_FULL',
+          message: `All ${MAX_SLOTS} slots have been filled. We're sorry — registrations are now closed. Thank you for your interest and we hope to see you in the next tournament!`
+        })
+      }
+    }
+
     // Check if email already exists
     const { data: existing } = await supabase
       .from('players')
@@ -41,7 +59,17 @@ exports.handler = async (event) => {
 
     if (error) throw error
 
-    return { statusCode: 201, body: JSON.stringify({ message: 'Registration successful' }) }
+    // Calculate slot number for this player
+    const slotNumber = (count || 0) + 1
+
+    return {
+      statusCode: 201,
+      body: JSON.stringify({
+        message: 'Registration successful',
+        slotNumber,
+        slotsRemaining: MAX_SLOTS - slotNumber,
+      })
+    }
   } catch (err) {
     console.error(err)
     return { statusCode: 500, body: JSON.stringify({ error: 'Server error: ' + err.message }) }
