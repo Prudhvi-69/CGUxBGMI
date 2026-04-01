@@ -19,7 +19,7 @@ exports.handler = async (event) => {
   try {
     const { data, error } = await supabase
       .from('tournaments')
-      .select('id, name, description, date, time, max_players, registered_count, prize_pool, status')
+      .select('id, name, description, date, time, max_players, registered_count, prize_pool, status, eligible_years, match_type, map_name, room_info, whatsapp_link')
       .order('date', { ascending: true })
 
     if (error) throw error
@@ -34,6 +34,11 @@ exports.handler = async (event) => {
       registeredCount: t.registered_count,
       prizePool: t.prize_pool,
       status: t.status,
+      eligibleYears: t.eligible_years,
+      matchType: t.match_type,
+      mapName: t.map_name,
+      roomInfo: t.room_info,
+      whatsappLink: t.whatsapp_link,
     }))
 
     return { statusCode: 200, body: JSON.stringify({ tournaments }) }
